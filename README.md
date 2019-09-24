@@ -1,1 +1,1 @@
-# CS1980
+# CS1980 Data Mining for Student Scheduling
