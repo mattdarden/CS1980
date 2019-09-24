@@ -1,0 +1,10 @@
+Student Stories
+  -Upon reading their student data, propose the next up to 3 CS classes for the next semester
+  -Provide information on their academic outlook if they continue on their current path
+  -Provide information on the percentage of students who earned what grade (A-F) taking the
+    recommended courses next semester, 2 semesters away, or 3 semesters apart
+
+Advisor Stories
+  -Provide easy to use software that students can run on all platforms
+  -Upon reading the student data, provide a list of students that may need to schedule an advising meeting
+  
