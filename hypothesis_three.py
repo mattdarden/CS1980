@@ -69,19 +69,17 @@ def create_new_table():
 
 
 def comparePaths(class_A_cat_num, class_B_cat_num):
-    cur.execute("SELECT * FROM HYPTHREE WHERE cat_num = ?",(class_A_cat_num ,))
+    cur.execute("SELECT * FROM HYPTHREE WHERE sub_code='CS' AND cat_num = ?",(class_A_cat_num ,))
     class_A_info=cur.fetchall()
     con.commit()
     cur.execute("SELECT * FROM HYPTHREE")
     class_all_info = cur.fetchall()
     con.commit()
-    cur.execute("SELECT * FROM HYPTHREE WHERE cat_num = ?",(class_B_cat_num ,))
+    cur.execute("SELECT * FROM HYPTHREE WHERE sub_code='CS' AND cat_num = ?",(class_B_cat_num ,))
     class_B_info=cur.fetchall()
     con.commit()
-    print(len(class_B_info))
-    print(len(class_all_info))
-    for i in range(20):
-        print(class_B_info[i][0])
+
+
 
 def close_table():
     con.close()
@@ -109,6 +107,6 @@ def grade_points(letter):
         return 1.0
     if letter == 'D-':
         return 0.75
-    if letter == 'F':
+    if letter == 'F' or letter == 'G' or letter == 'W':
         return 0
     return -1
