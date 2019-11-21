@@ -2,6 +2,7 @@ import sqlite3 as lite
 import csv
 import re
 import numpy
+from datetime import date
 
 con = lite.connect('capstone.sqlite')
 
@@ -237,4 +238,3 @@ with con:
 		for row in all_rows:
 			print (row)
 		print (" ")
-	
