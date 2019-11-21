@@ -5,7 +5,7 @@ from numpy import mean
 con = lite.connect('learning.db')
 cur = con.cursor()
 
-def create_new_table():
+def create_new_table(fileLoc):
     done = 0
     cur.execute('DROP TABLE IF EXISTS HYPTHREE')
     cur.execute("""CREATE TABLE HYPTHREE (analytics_id integer, 
@@ -22,7 +22,7 @@ def create_new_table():
                                 grading_basis text,
                                 grading_basis_desc text)""")
     con.commit()
-    loc = ('C:/Users/rdere/Desktop/anonymized data/Classes Taken.xlsx')
+    loc = (fileLoc)
     wb = xlrd.open_workbook(loc)
     sheet = wb.sheet_by_index(0)
     rows = sheet.nrows
