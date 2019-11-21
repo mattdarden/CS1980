@@ -1,12 +1,10 @@
 import sqlite3 as lite
 import xlrd
-import csv
-import re
-import numpy
-from datetime import date
+from numpy import mean
 
 con = lite.connect('learning.db')
 cur = con.cursor()
+
 def create_new_table():
     done = 0
     cur.execute('DROP TABLE IF EXISTS HYPTHREE')
@@ -72,17 +70,69 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     cur.execute("SELECT * FROM HYPTHREE WHERE sub_code='CS' AND cat_num = ?",(class_A_cat_num ,))
     class_A_info=cur.fetchall()
     con.commit()
-    cur.execute("SELECT * FROM HYPTHREE")
-    class_all_info = cur.fetchall()
-    con.commit()
+
     cur.execute("SELECT * FROM HYPTHREE WHERE sub_code='CS' AND cat_num = ?",(class_B_cat_num ,))
     class_B_info=cur.fetchall()
     con.commit()
+    class_A_times = {}
+    for i in range(len(class_A_info)):
+        key = class_A_info[i][0]
+        time = class_A_info[i][1]
+        if key in  class_A_times.keys():
+            if compare_term_code(time,class_A_times[key]) == -1:
+                class_A_times[key] = time
+        else:
+            class_A_times[key] = time
 
+    AB = []
+    BA = []
+    same = []
+    si = 0
+    di = 0
+    for i in range(len(class_B_info)):
+        grade = grade_points(class_B_info[i][9])
+        time = class_B_info[i][1]
+        id = class_B_info[i][0]
+        if grade == -1:
+            continue
+        elif id not in class_A_times.keys():
+            BA.append(grade)
+            di = di +1
+        else:
+            si = si +1
+            group = compare_term_code(class_A_times[id], time)
+            if group == 0:
+                same.append(grade)
+            elif group == -1:
+                AB.append(grade)
+            else:
+                BA.append(grade)
 
-
+    print(mean(AB))
+    print(mean(BA))
+    print(mean(same))
 def close_table():
     con.close()
+
+def compare_term_code(A,B):
+    if A == B:
+        return 0
+    a = A/10
+    b = B/10
+    if a < b:
+        return -1
+    if a > b:
+        return 1
+    if a == b:
+        a = A%10
+        b = B%10
+        if a == 7:
+            return -1
+        if a == 4 and b == 1:
+            return -1
+        else:
+            return 1
+    return -9
 
 def grade_points(letter):
     if letter == 'A+' or letter == 'A':
@@ -107,6 +157,7 @@ def grade_points(letter):
         return 1.0
     if letter == 'D-':
         return 0.75
-    if letter == 'F' or letter == 'G' or letter == 'W':
+    if letter == 'F':
         return 0
-    return -1
+    else:
+        return -1
