@@ -67,11 +67,11 @@ def create_new_table(fileLoc):
 
 
 def comparePaths(class_A_cat_num, class_B_cat_num):
-    cur.execute("SELECT * FROM HYPTHREE WHERE sub_code='CS' AND cat_num = ?",(class_A_cat_num ,))
+    cur.execute("SELECT * FROM Classes_taken WHERE sub_code='CS' AND cat_num = ?",(class_A_cat_num ,))
     class_A_info=cur.fetchall()
     con.commit()
 
-    cur.execute("SELECT * FROM HYPTHREE WHERE sub_code='CS' AND cat_num = ?",(class_B_cat_num ,))
+    cur.execute("SELECT * FROM Classes_taken WHERE sub_code='CS' AND cat_num = ?",(class_B_cat_num ,))
     class_B_info=cur.fetchall()
     con.commit()
     class_A_times = {}
