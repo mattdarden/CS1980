@@ -2,7 +2,7 @@ import sqlite3 as lite
 import xlrd
 from numpy import mean
 
-con = lite.connect('learning.db')
+con = lite.connect('capstone.sqlite')
 cur = con.cursor()
 
 def create_new_table(fileLoc):
@@ -161,3 +161,5 @@ def grade_points(letter):
         return 0
     else:
         return -1
+
+comparePaths('447','449')
