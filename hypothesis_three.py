@@ -1,6 +1,7 @@
 import sqlite3 as lite
 import xlrd
 from numpy import mean
+from scipy import stats
 
 con = lite.connect('learning.db')
 cur = con.cursor()
@@ -67,6 +68,8 @@ def create_new_table(fileLoc):
 
 
 def comparePaths(class_A_cat_num, class_B_cat_num):
+    correction =  0.0166667
+    alpha = 0.05
     cur.execute("SELECT * FROM HYPTHREE WHERE sub_code='CS' AND cat_num = ?",(class_A_cat_num ,))
     class_A_info=cur.fetchall()
     con.commit()
@@ -107,10 +110,39 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
                 AB.append(grade)
             else:
                 BA.append(grade)
+    results, pvalue = stats.levene(AB, BA, same)
+    print(pvalue)
+    if pvalue > alpha:
+        print('The order students take these two classes should not effect there overall grade')
+        return 0
+    ABtoBA = False
+    ABtosame = False
+    BAtosame = False
+    BAmean = mean(BA)
+    ABmean = mean(AB)
+    same_mean = mean(same)
 
-    print(mean(AB))
-    print(mean(BA))
-    print(mean(same))
+    r, p=stats.ttest_ind(AB,BA)
+    if p > correction:
+        ABtoBA = True
+    r, p= stats.ttest_ind(AB, same)
+    if p > correction:
+        ABtosame = True
+    r, p = stats.ttest_ind(BA, same)
+    if p > correction:
+        BAtosame = True
+    print(ABtoBA)
+    print(BAtosame)
+    print(ABtosame)
+    print('By anazlying the data with an ANOVA test with a Post-hoc test that used Bonferroni correction the data shows that:')
+    if ABtoBA:
+        if ABmean > BAmean:
+            great = class_A_cat_num
+            small = class_B_cat_num
+        else:
+            great = class_B_cat_num
+            small = class_A_cat_num
+        print('Sudent')
 def close_table():
     con.close()
 
