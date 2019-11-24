@@ -7,8 +7,8 @@ cur = con.cursor()
 
 def create_new_table(fileLoc):
     done = 0
-    cur.execute('DROP TABLE IF EXISTS HYPTHREE')
-    cur.execute("""CREATE TABLE HYPTHREE (analytics_id integer, 
+    cur.execute('DROP TABLE IF EXISTS Classes_taken')
+    cur.execute("""CREATE TABLE Classes_taken (analytics_id integer, 
                                 academic_term_code integer,
                                 term_desc integer,
                                 cat_num integer,
@@ -29,7 +29,7 @@ def create_new_table(fileLoc):
     for i in range(1, rows):
         row = sheet.row_values(i)
         if row[9] != 'x' and row[9] != '0' and row[9] != '' and row[12] == 'Letter Grade':
-            cur.execute("""INSERT INTO HYPTHREE (analytics_id, 
+            cur.execute("""INSERT INTO Classes_taken (analytics_id, 
                                 academic_term_code,
                                 term_desc,
                                 cat_num,
@@ -67,6 +67,8 @@ def create_new_table(fileLoc):
 
 
 def comparePaths(class_A_cat_num, class_B_cat_num):
+    correction = 0.0166667
+    alpha = 0.05
     cur.execute("SELECT * FROM Classes_taken WHERE sub_code='CS' AND cat_num = ?",(class_A_cat_num ,))
     class_A_info=cur.fetchall()
     con.commit()
@@ -87,8 +89,6 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     AB = []
     BA = []
     same = []
-    si = 0
-    di = 0
     for i in range(len(class_B_info)):
         grade = grade_points(class_B_info[i][9])
         time = class_B_info[i][1]
@@ -97,9 +97,7 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
             continue
         elif id not in class_A_times.keys():
             BA.append(grade)
-            di = di +1
         else:
-            si = si +1
             group = compare_term_code(class_A_times[id], time)
             if group == 0:
                 same.append(grade)
@@ -107,10 +105,48 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
                 AB.append(grade)
             else:
                 BA.append(grade)
+    results, pvalue = stats.f_oneway(AB, BA, same)
+    if pvalue > alpha:
+        print('The order students take these two classes should not effect there overall grade in CS ' + class_B_cat_num + '.')
+        return
+    ABtoBA = False
+    ABtosame = False
+    BAtosame = False
+    BAmean = mean(BA)
+    ABmean = mean(AB)
+    same_mean = mean(same)
 
-    print(mean(AB))
-    print(mean(BA))
-    print(mean(same))
+    r, p = stats.ttest_ind(AB, BA)
+    if p > correction:
+        ABtoBA = True
+    r, p = stats.ttest_ind(AB, same)
+    if p > correction:
+        ABtosame = True
+    r, p = stats.ttest_ind(BA, same)
+    if p > correction:
+        BAtosame = True
+    print('By anazlying the data with an ANOVA test and a Post-hoc test that used Bonferroni correction the data shows that the best paths to take CS ' + class_B_cat_num + ' are:')
+    if ABtoBA:
+        if ABmean > BAmean:
+            great = 'after'
+            small = 'before'
+        else:
+            great = 'before'
+            small = 'after'
+        print('It is better to take CS ' + class_B_cat_num + ' ' + great + ' CS ' + class_A_cat_num + ' instead of taking CS ' + class_B_cat_num + ' ' + small + ' CS ' + class_A_cat_num + '.')
+    if BAtosame:
+        if BAmean > same_mean:
+            print('It is better to take CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + ' instead of taking the two classes in the same semester.')
+        else:
+            print('It is better to take the classes in the same semester instead of taking CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + '.')
+
+    if ABtosame:
+        if ABmean > same_mean:
+            print('It is better to take CS ' + class_B_cat_num + ' after CS ' + class_A_cat_num + ' instead of taking the two classes in the same semester.')
+        else:
+            print('It is better to take the classes in the same semester instead of taking CS ' + class_B_cat_num + ' after CS ' + class_A_cat_num + '.')
+
+
 def close_table():
     con.close()
 
