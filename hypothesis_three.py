@@ -110,11 +110,10 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
                 AB.append(grade)
             else:
                 BA.append(grade)
-    results, pvalue = stats.levene(AB, BA, same)
-    print(pvalue)
+    results, pvalue = stats.f_oneway(AB, BA, same)
     if pvalue > alpha:
-        print('The order students take these two classes should not effect there overall grade')
-        return 0
+        print('The order students take these two classes should not effect there overall grade in CS '+class_B_cat_num+'.')
+        return
     ABtoBA = False
     ABtosame = False
     BAtosame = False
@@ -131,18 +130,26 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     r, p = stats.ttest_ind(BA, same)
     if p > correction:
         BAtosame = True
-    print(ABtoBA)
-    print(BAtosame)
-    print(ABtosame)
-    print('By anazlying the data with an ANOVA test with a Post-hoc test that used Bonferroni correction the data shows that:')
+    print('By anazlying the data with an ANOVA test and a Post-hoc test that used Bonferroni correction the data shows that the best paths to take CS '+class_B_cat_num+' are:')
     if ABtoBA:
         if ABmean > BAmean:
-            great = class_A_cat_num
-            small = class_B_cat_num
+            great = 'after'
+            small = 'before'
         else:
-            great = class_B_cat_num
-            small = class_A_cat_num
-        print('Sudent')
+            great = 'before'
+            small = 'after'
+        print('It is better to take CS '+class_B_cat_num+' '+great+' CS '+class_A_cat_num+' instead of taking CS '+class_B_cat_num+' '+small+' CS '+class_A_cat_num+'.')
+    if BAtosame:
+        if BAmean>same_mean:
+            print('It is better to take CS '+class_B_cat_num+' before CS '+class_A_cat_num+' instead of taking the two classes in the same semester.')
+        else:
+            print('It is better to take the classes in the same semester instead of taking CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + '.')
+
+    if ABtosame:
+        if ABmean>same_mean:
+            print('It is better to take CS ' + class_B_cat_num + ' after CS ' + class_A_cat_num + ' instead of taking the two classes in the same semester.')
+        else:
+            print('It is better to take the classes in the same semester instead of taking CS ' + class_B_cat_num + ' after CS ' + class_A_cat_num + '.')
 def close_table():
     con.close()
 
