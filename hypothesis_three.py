@@ -1,10 +1,12 @@
 import sqlite3 as lite
 import xlrd
 from numpy import mean
-
+from scipy import stats
 con = lite.connect('capstone.sqlite')
 cur = con.cursor()
 
+#call this function when a new table needs to be created. This function works on xlsx files
+#enter the xlsx file location and it'll take the Classes_taken file and turn it into the Classess_taken table
 def create_new_table(fileLoc):
     done = 0
     cur.execute('DROP TABLE IF EXISTS Classes_taken')
@@ -65,10 +67,13 @@ def create_new_table(fileLoc):
             print(done)
             done = done + 1000
 
-
+#enter two courses category number. It will then determine when a student should take class_B in relation to class_A to have a higher chance of producing
+#a higher grade
 def comparePaths(class_A_cat_num, class_B_cat_num):
     correction = 0.0166667
     alpha = 0.05
+
+    #first find all the student who took the CS class_A_cat_num course and the class_B_cat_num course
     cur.execute("SELECT * FROM Classes_taken WHERE sub_code='CS' AND cat_num = ?",(class_A_cat_num ,))
     class_A_info=cur.fetchall()
     con.commit()
@@ -77,10 +82,12 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     class_B_info=cur.fetchall()
     con.commit()
     class_A_times = {}
+
+    #first loop through the class_A info. There are student who have retaken classes and we want the earliest class they took in relation to class_B
     for i in range(len(class_A_info)):
         key = class_A_info[i][0]
         time = class_A_info[i][1]
-        if key in  class_A_times.keys():
+        if key in class_A_times.keys():
             if compare_term_code(time,class_A_times[key]) == -1:
                 class_A_times[key] = time
         else:
