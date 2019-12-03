@@ -10,3 +10,5 @@ anonymized_data/Classes Taken.xlsx
 anonymized_data/csv/.DS_Store
 *.xls
 *.pdf
+__pycache__/corrstats.cpython-37.pyc
+*.pyc
