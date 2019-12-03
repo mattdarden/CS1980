@@ -1,71 +1,13 @@
 import sqlite3 as lite
 import xlrd
 from numpy import mean
+import csv
 from scipy import stats
-con = lite.connect('capstone.sqlite')
+print("Enter database for hypothesis_one: ")
+database = input()
+con = lite.connect(database)
 cur = con.cursor()
 
-#call this function when a new table needs to be created. This function works on xlsx files
-#enter the xlsx file location and it'll take the Classes_taken file and turn it into the Classess_taken table
-def create_new_table(fileLoc):
-    done = 0
-    cur.execute('DROP TABLE IF EXISTS Classes_taken')
-    cur.execute("""CREATE TABLE Classes_taken (analytics_id integer, 
-                                academic_term_code integer,
-                                term_desc integer,
-                                cat_num integer,
-                                sub_code text,
-                                sub_desc text,
-                                class_num integer,
-                                class_sec_num integer,
-                                title text,
-                                grade text,
-                                grade_desc text,
-                                grading_basis text,
-                                grading_basis_desc text)""")
-    con.commit()
-    loc = (fileLoc)
-    wb = xlrd.open_workbook(loc)
-    sheet = wb.sheet_by_index(0)
-    rows = sheet.nrows
-    for i in range(1, rows):
-        row = sheet.row_values(i)
-        if row[9] != 'x' and row[9] != '0' and row[9] != '' and row[12] == 'Letter Grade':
-            cur.execute("""INSERT INTO Classes_taken (analytics_id, 
-                                academic_term_code,
-                                term_desc,
-                                cat_num,
-                                sub_code,
-                                sub_desc,
-                                class_num,
-                                class_sec_num,
-                                title,
-                                grade,
-                                grade_desc,
-                                grading_basis,
-                                grading_basis_desc) VALUES (:analytics_id, 
-                                :academic_term_code,
-                                :term_desc,
-                                :cat_num,
-                                :sub_code,
-                                :sub_desc,
-                                :class_num,
-                                :class_sec_num,
-                                :title,
-                                :grade,
-                                :grade_desc,
-                                :grading_basis,
-                                :grading_basis_desc)""",
-                        {'analytics_id': row[0], 'academic_term_code': row[1], 'term_desc': row[2], 'cat_num': row[3],
-                         'sub_code': row[4], 'sub_desc': row[5], 'class_num': row[6], 'class_sec_num': row[7],
-                         'title': row[8], 'grade': row[9], 'grade_desc': row[10], 'grading_basis': row[11],
-                         'grading_basis_desc': row[12]})
-            con.commit()
-        if i < 10:
-            print(row)
-        if i % 1000 == 0:
-            print(done)
-            done = done + 1000
 
 #enter two courses category number. It will then determine when a student should take class_B in relation to class_A to have a higher chance of producing
 #a higher grade
@@ -74,15 +16,14 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     alpha = 0.05
 
     #first find all the student who took the CS class_A_cat_num course and the class_B_cat_num course
-    cur.execute("SELECT * FROM Classes_taken WHERE sub_code='CS' AND cat_num = ?",(class_A_cat_num ,))
+    cur.execute("SELECT * FROM Classes_taken WHERE sub_code='CS' AND cat_num = ? AND grading_basis_desc='Letter Grade' ",(class_A_cat_num ,))
     class_A_info=cur.fetchall()
     con.commit()
 
-    cur.execute("SELECT * FROM Classes_taken WHERE sub_code='CS' AND cat_num = ?",(class_B_cat_num ,))
+    cur.execute("SELECT * FROM Classes_taken WHERE sub_code='CS' AND cat_num = ? AND grading_basis_desc='Letter Grade' ",(class_B_cat_num ,))
     class_B_info=cur.fetchall()
     con.commit()
     class_A_times = {}
-
     #first loop through the class_A info. There are student who have retaken classes and we want the earliest class they took in relation to class_B
     #by using a dict we can determine if a student has been added to a list and if so we check the current academic_term_code to see if they took the course at an eariler time
     for i in range(len(class_A_info)):
@@ -104,21 +45,25 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     #We loop through the class_B list and add the grade to either AB, BA, or same
     #since the grades are letter grade we class the function grade_points to convert the letter to a floating point grade
     #we also need the student term code and student id
+    amount = 0
     for i in range(len(class_B_info)):
-        grade = grade_points(class_B_info[i][9])
+        grade = grade_points(class_B_info[i][8])
         time = class_B_info[i][1]
-        id = class_B_info[i][0]
+        key = class_B_info[i][0]
+
 
         #if the grade is a -1 then the student did not receieve a A+ to F grade and may have received a S, W, or I
         #so they are added to none of the lists
         #else if the id for students in class B aren't in class_A_times key then the student never took class A and goes in the BA list
         #else we compare the earliest time they took class A to determine which list the grade should go AB, BA, or same
         if grade == -1:
+
+            amount = amount + 1
             continue
-        elif id not in class_A_times.keys():
+        elif key not in class_A_times.keys():
             BA.append(grade)
         else:
-            group = compare_term_code(class_A_times[id], time)
+            group = compare_term_code(class_A_times[key], time)
             if group == 0:
                 same.append(grade)
             elif group == -1:
@@ -131,8 +76,17 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
 
     #if the pvalue recieved greater than the alpha then differences between the means are not statistically significant
     #that means class B grades are no impacted from the order a student takes class A in relation to class B
+    BAmean = mean(BA)
+    ABmean = mean(AB)
+    same_mean = mean(same)
+    print("############################## HYPOTHESIS 3 RESULTS ##############################\n")
+    print('The average grade for students who took CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + ' is ' + str(BAmean))
+    print('The average grade for students who took CS ' + class_B_cat_num + ' after CS ' + class_A_cat_num + ' is ' + str(ABmean))
+    print('The average grade for students who took CS ' + class_B_cat_num + ' and CS ' + class_A_cat_num + ' at the same time is ' + str(same_mean))
+    print("The p value from the ANOVA test is "+str(pvalue))
+    print("")
     if pvalue > alpha:
-        print('The order students take these two classes should not effect there overall grade in CS ' + class_B_cat_num + '.')
+        print('According to the ANOVA test when the p value was compared to an alpha of 0.05 the order students take these two classes should not effect there overall grade in CS ' + class_B_cat_num + '.')
         return
 
     #if the groups are found to have a statistically significant difference we use the
@@ -140,27 +94,25 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     ABtoBA = False
     ABtosame = False
     BAtosame = False
-    BAmean = mean(BA)
-    ABmean = mean(AB)
-    same_mean = mean(same)
 
     #we do a 2-way t test on each different path pair to look for the pair that is statistically significant
     r, p = stats.ttest_ind(AB, BA)
     if p < correction:
+        ABtoBAp = p
         ABtoBA = True
     r, p = stats.ttest_ind(AB, same)
     if p < correction:
+        ABtosamep = p
         ABtosame = True
     r, p = stats.ttest_ind(BA, same)
     if p < correction:
+        BAtosamep = p
         BAtosame = True
-    print('The average grade for students who took CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + ' is ' + str(BAmean))
-    print('The average grade for students who took CS ' + class_B_cat_num + ' after CS ' + class_A_cat_num + ' is ' + str(ABmean))
-    print('The average grade for students who took CS ' + class_B_cat_num + ' and CS ' + class_A_cat_num + ' at the same time is ' + str(same_mean))
-    print("")
+
 
     #if a path does contain a statistically significant difference we look at the means of the group. The group with the higher means is the path the student should take
     print('By anazlying the data with an ANOVA test and a Post-hoc test that used Bonferroni correction the data shows that the best paths to take CS ' + class_B_cat_num + ' are:')
+    print("")
     if ABtoBA:
         if ABmean > BAmean:
             great = 'after'
@@ -169,18 +121,24 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
             great = 'before'
             small = 'after'
         print('It is better to take CS ' + class_B_cat_num + ' ' + great + ' CS ' + class_A_cat_num + ' instead of taking CS ' + class_B_cat_num + ' ' + small + ' CS ' + class_A_cat_num + '.')
+        print('Its t-test p-value = '+str(ABtoBAp))
+        print("")
 
     if BAtosame:
         if BAmean > same_mean:
             print('It is better to take CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + ' instead of taking the two classes in the same semester.')
         else:
             print('It is better to take the two classes in the same semester instead of taking CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + '.')
+            print('Its t-test p-value = ' + str(BAtosamep))
+            print("")
 
     if ABtosame:
         if ABmean > same_mean:
             print('It is better to take CS ' + class_B_cat_num + ' after CS ' + class_A_cat_num + ' instead of taking the two classes in the same semester.')
         else:
             print('It is better to take the classes in the same semester instead of taking CS ' + class_B_cat_num + ' after CS ' + class_A_cat_num + '.')
+            print('Its t-test p-value =' + str(ABtosamep))
+            print("")
 
     if not ABtosame and not BAtosame and not ABtoBA:
         print("Check the math something went wrong")
@@ -246,5 +204,8 @@ def grade_points(letter):
         return 0
     else:
         return -1
-
-comparePaths('447','449')
+def main():
+    comparePaths('447','449')
+    input('Press ENTER to exit')
+if __name__ == '__main__':
+	main()
