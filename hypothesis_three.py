@@ -84,6 +84,7 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     class_A_times = {}
 
     #first loop through the class_A info. There are student who have retaken classes and we want the earliest class they took in relation to class_B
+    #by using a dict we can determine if a student has been added to a list and if so we check the current academic_term_code to see if they took the course at an eariler time
     for i in range(len(class_A_info)):
         key = class_A_info[i][0]
         time = class_A_info[i][1]
@@ -92,14 +93,26 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
                 class_A_times[key] = time
         else:
             class_A_times[key] = time
-
+    #AB are students who took class B after class A
+    #BA are students who took class B before A or have not taken A yet
+    #same are for students who took the 2 classes in the same semester
     AB = []
     BA = []
     same = []
+    #We loop through the class_B list and add the grade to either AB, BA, or same
+    #since the grades are letter grade we class the function grade_points to convert the letter to a floating point grade
     for i in range(len(class_B_info)):
+        #get the number grade from the student's letter grade
         grade = grade_points(class_B_info[i][9])
+        #gets the academic_term_code of when the student took the class
         time = class_B_info[i][1]
+        #gets student id
         id = class_B_info[i][0]
+
+        #if the grade is a -1 then the student did not receieve a A+ to F grade and may have received a S, W, or I
+        #so they are added to none of the lists
+        #else if the id for students in class B aren't in class_A_times key then the student never took class A and goes in the BA list
+        #else we compare the earliest time they took class A to determine which list the grade should go AB, BA, or same
         if grade == -1:
             continue
         elif id not in class_A_times.keys():
@@ -112,10 +125,17 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
                 AB.append(grade)
             else:
                 BA.append(grade)
+    #f_oneway preforms an one-way ANOVA tests on the three lists
     results, pvalue = stats.f_oneway(AB, BA, same)
+
+    #if the pvalue recieved greater than the alpha then differences between the means are not statistically significant
+    #that means class B grades are no impacted from the order a student takes class A in relation to class B
     if pvalue > alpha:
         print('The order students take these two classes should not effect there overall grade in CS ' + class_B_cat_num + '.')
         return
+
+    #if the groups are found to have a statistically significant difference we use the
+    #Bonferroni correction to determine which pair of groups contains the difference
     ABtoBA = False
     ABtosame = False
     BAtosame = False
@@ -124,13 +144,13 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     same_mean = mean(same)
 
     r, p = stats.ttest_ind(AB, BA)
-    if p > correction:
+    if p < correction:
         ABtoBA = True
     r, p = stats.ttest_ind(AB, same)
-    if p > correction:
+    if p < correction:
         ABtosame = True
     r, p = stats.ttest_ind(BA, same)
-    if p > correction:
+    if p < correction:
         BAtosame = True
     print('By anazlying the data with an ANOVA test and a Post-hoc test that used Bonferroni correction the data shows that the best paths to take CS ' + class_B_cat_num + ' are:')
     if ABtoBA:
