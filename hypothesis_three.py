@@ -195,8 +195,8 @@ def compare_term_code(A,B):
         return 0
 
     #the first 3 digits of the code give us the year the course was taken
-    a = A/10
-    b = B/10
+    a = int(A / 10)
+    b = int(B / 10)
     if a < b:
         return -1
     if a > b:
