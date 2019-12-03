@@ -6,9 +6,9 @@ from scipy.stats.stats import pearsonr
 """
 get user input for which database to use
 capstone.sqlite = database that contains the official anonymized data
-unittest.sqlite = database with fake data used for unit testing
+unittest1.sqlite = database with fake data used for unit testing for hypothesis_one
 """
-print("Enter database: ")
+print("Enter database for hypothesis_one: ")
 database = input()
 
 
@@ -16,16 +16,21 @@ database = input()
 con = lite.connect(database)
 cur = con.cursor()
 
-"""
-1.) create a table to get all grades for students who took CS0401 and CS0445
-	a.) need to create a unique dataset that only takes a letter grade
-	b.) select the analytics ID, category number, subject code, and grades from each class
-	c.) join the CS0401 and CS0445 tables based on analytics_id 
-	d.) filter out students that did not take CS0401 AND CS0445, and students that received a grade 'x' or 'N' or 'R' or 'S' or '0'
-		(x = redacted, N = noncredit, R = resignation, S = satisfactory, 0 = unknown)
-"""
 def create_table(class1_number, class1_subject, class2_number, class2_subject):
-	# creating a table of students who took CS0445, filtering out students with distinct letter grades
+	"""
+	creates a table that gets all students who took CS0401 and CS0445
+		- CS0401 grades are unique, but CS0445 grades are not
+		- clean data of students that received a grade 'x', 'N', 'R', 'S', '0', 'W', 'G', or 'NC'
+		
+	PARAMETERS:
+		- String class1_number:	cat_num of the first class (i.e. '0401')
+		- String class1_subject: sub_code of the first class (i.e. 'CS')
+		- String class2_number:	cat_num of the second class (i.e. '0445')
+		- String class2_subject: sub_code of the second class (i.e. 'CS')
+	RETURNS:
+		- list[] test_output: a list of students that took CS0401 and CS0445
+			- format: (analytics_id, class1_number, class1_subject, class1_grade, class2_number, class2_subject, class2_grade)
+	"""
 	ds = """
 	CREATE TABLE ds AS 
 		SELECT DISTINCT analytics_id as ds_id, cat_num as datastructures, sub_code as datastructures_cs, grade AS datastructures_grade
@@ -75,14 +80,15 @@ def create_table(class1_number, class1_subject, class2_number, class2_subject):
 		test_output.append(row)
 	return test_output
 
-
-"""
-2.) update the table to reformat the letter grades into a numerical format
-	a.) update the grades using the UPDATE, SET, and CASE functions
-	b.) the corresponding numerical quality points number is based on an official grading system published by the University of Pittsburgh
-		* grading system can be found at this link: https://www.registrar.pitt.edu/sites/default/files/pdf/Grading%20System.pdf
-"""
 def update_table():
+	"""
+	update the table of students who took class1 and class2 so that the letter grades are represented as numerical quality points
+		- the corresponding numerical quality points number is based on an official grading system published by the University of Pittsburgh
+		  grading system can be found at this link: https://www.registrar.pitt.edu/sites/default/files/pdf/Grading%20System.pdf
+	
+	RETURNS:
+		- updated_list: updated list of students with numerical grades instead of letter grades
+	"""
 	update_java = """
 	UPDATE bothclasses SET java_grade = CASE
 		WHEN java_grade = 'A+' THEN 4.0
@@ -123,137 +129,114 @@ def update_table():
 	"""
 	cur.execute(update_datastructures)
 
-	java_grades = """
-	SELECT java_grade
-	FROM bothclasses
-	"""	
-	rows = cur.execute(java_grades)
-
-	java_grades_list = []
-	for row in rows:
-		for r in row:
-			java_grades_list.append(float(r))
-
-	data_grades = """
-	SELECT datastructures_grade
-	FROM bothclasses
+	updated_grades = """
+	SELECT * FROM bothclasses
 	"""
-
-	data_grades_list = []
-	rows = cur.execute(data_grades)
+	updated_list = []
+	rows = cur.execute(updated_grades)
 	for row in rows:
-		for r in row:
-			data_grades_list.append(float(r))
+		updated_list.append(row)
+	return updated_list
 
-	return java_grades_list, data_grades_list
+def get_grades(students_list):
+	"""
+	get the grades for class1 and class2 from the list of the students who took both class1 and class2
 
-"""
-4.) calculate the average and standard deviation of the grades_list from CS0401 
-	a.) using python library numPy
-	b.) also calculating half a standard deviation below the mean in order to create a list
-		of students who achieved a grade lower than that
-"""
-def calculate_mean(grades_list):
-	return(numpy.mean(grades_list))
+	PARAMETERS:
+		- list[] students_list: list of students who took both class1 and class2
+
+	RETURNS:
+		- list[] class1_grades: a list of grades from class1 (returned as float)
+		- list[] class2_grades: a list of grades from class2 (returned as float)
+	"""
+	class1_grades = []
+	class2_grades = []
+	for student in students_list:
+		class1_grades.append(float(student[3]))
+		class2_grades.append(float(student[6]))
+	return class1_grades, class2_grades
 
 def calculate_half_std(grades_list):
+	"""
+	calculate 1/2 of the standard deviation 
+	
+	PARAMETERS:
+		- list[] grades_list: list of grades from the class we are finding the std dev for (must be a numerical value)
+	
+	RETURNS:
+		- float half_std: half of the standard deviation from the specified class
+	"""
 	standard_deviation = numpy.std(grades_list)
-	average = calculate_mean(grades_list)
-	half_std_below = average - (standard_deviation/2)
-	print(type(half_std_below))
-	return half_std_below
+	half_std = float(standard_deviation)/2.0
+	return float(half_std)
+
+def get_below_avg_grades(students_list, half_std_below):
+	below_avg = []
+	for student in students_list:
+		if float(student[3]) < half_std_below:
+			below_avg.append(student)
+	return below_avg
+
+def get_above_avg_grades(students_list, half_std_above):
+	above_avg = []
+	for student in students_list:
+		if float(student[3]) > half_std_above:
+			above_avg.append(student)
+	return above_avg	
 
 
-def update_table_below_avg(half_std_below):
-	update_java = """
-	UPDATE bothclasses SET java_grade = CASE
-		WHEN java_grade = 'A+' THEN 4.0
-		WHEN java_grade = 'A' THEN 4.0
-		WHEN java_grade = 'A-' THEN 3.75
-		WHEN java_grade = 'B+' THEN 3.25
-		WHEN java_grade = 'B' THEN 3.0
-		WHEN java_grade = 'B-' THEN 2.75
-		WHEN java_grade = 'C+' THEN 2.25
-		WHEN java_grade = 'C' THEN 2.0
-		WHEN java_grade = 'C-' THEN 1.75
-		WHEN java_grade = 'D+' THEN 1.25
-		WHEN java_grade = 'D' THEN 1.0
-		WHEN java_grade = 'D-' THEN 0.75
-		WHEN java_grade = 'F' THEN 0.0
-	END
+def get_pearson_coefficient(class1_grades, class2_grades):	
 	"""
-	cur.execute(update_java)
-
-	update_datastructures = """
-	UPDATE bothclasses SET datastructures_grade = CASE
-		WHEN datastructures_grade = 'A+' THEN 4.0
-		WHEN datastructures_grade = 'A' THEN 4.0
-		WHEN datastructures_grade = 'A-' THEN 3.75
-		WHEN datastructures_grade = 'B+' THEN 3.25
-		WHEN datastructures_grade = 'B' THEN 3.0
-		WHEN datastructures_grade = 'B-' THEN 2.75
-		WHEN datastructures_grade = 'C+' THEN 2.25
-		WHEN datastructures_grade = 'C' THEN 2.0
-		WHEN datastructures_grade = 'C-' THEN 1.75
-		WHEN datastructures_grade = 'D+' THEN 1.25
-		WHEN datastructures_grade = 'D' THEN 1.0
-		WHEN datastructures_grade = 'D-' THEN 0.75
-		WHEN datastructures_grade = 'F' THEN 0.0
-		WHEN datastructures_grade = 'G' THEN 0.0
-		WHEN datastructures_grade = 'W' THEN 0.0
-	END
+	gets the pearson correlation coeffiient using scipy.pearsonr()
+		- class1_grades and class2_grades must be the same size
+		- class1_grades and class2_grades must be corresponding values (although they do not have to be in order)
+	PARAMETERS:
+		- class1_grades: list of grades for class 1 (must be a list of numerical values)
+		- class2_grades: list of grades for class2 (must be a list of numerical values)
+	RETURN
+		- coefficient: the pearson correlation coefficient value between the range of [-1, 1]
+		- p_value: the significance of the correlation in the range [0 1]
 	"""
-	cur.execute(update_datastructures)
+	p_tuple = pearsonr(class1_grades, class2_grades)
+	coeff = p_tuple[0]
+	p_value = p_tuple[1]
+	return float(coeff), float(p_value)
 
-	below_avg_java = """
-	SELECT java_grade
-	FROM bothclasses
-	WHERE java_grade < ?
-	"""
-
-	below_avg_java_grades = []
-	rows = cur.execute(below_avg_java, (half_std_below.astype(float),))
-	for row in rows:
-		for r in row:
-			below_avg_java_grades.append(float(r))
-
-	below_avg_datastructures = """
-	SELECT datastructures_grade
-	FROM bothclasses
-	WHERE java_grade < ?
-	"""
-	below_avg_datastructures_grades = []
-	rows = cur.execute(below_avg_datastructures, (half_std_below.astype(float),))
-	for row in rows:
-		for r in row:
-			below_avg_datastructures_grades.append(float(r))
-
-	return below_avg_java_grades, below_avg_datastructures_grades
-
-"""
-6.) Find the pearson correlation coefficient for all CS0401 and corresponding CS0445 grades
-	a.) query for all CS0401 grades and put them into an array
-	b.) query for all corresponding CS0445 grades and put them into an arry
-	c.) use the SciPy.stats.pearsonr() function to find the pearson correllation coefficient
-	d.) output is: (pearson correlation coefficient, significance)
-"""
-def pearson_coefficient(java_grades_list, data_grades_list):	
-	return pearsonr(java_grades_list, data_grades_list)
-
+def print_results(category, sample_size, pearson_coeff, p_value):
+	print(category.upper() + " GRADES:")
+	print("--------------------------------------" + "--------------------------------")
+	print("                        SAMPLE SIZE:  " + str(sample_size))
+	print("    PEARSON CORRELATION COEFFICIENT:  " + str(pearson_coeff))
+	print("                            P-VALUE:  " + str(p_value))
+	print("--------------------------------------" + "--------------------------------")
 
 ################### MAIN ##########################
 def main():
-	create_table("0401", "CS", "0445", "CS")
-	java_grades_list, data_grades_list = update_table()
-	pearson_all = pearson_coefficient(java_grades_list, data_grades_list)
-	half_std_below = calculate_half_std(java_grades_list)
+	create_table("0401", "CS", "0445", "CS")							# create table of students who took class1 (CS0401) and class2 (CS0445)
+	students_list = update_table()										# update table so that letter grades are now represented by numerical quality points
+	all_class1_grades, all_class2_grades = get_grades(students_list)	# get the list of grades from the updated students list
+	average = float(numpy.mean(all_class1_grades))						# calculate the mean of class1 grades
+	half_std = calculate_half_std(all_class1_grades)					# calculate half of the standard deviation
+	half_std_below = average - half_std 								# calculate half standard deviation below the mean of class1 grades
+	half_std_above = average + half_std 								# calculate half standard deviation above the mean of class1 grades
+	
+	# getting results for below average grades
+	below_avg = get_below_avg_grades(students_list, half_std_below)						# get a list of students who did below avg
+	below_class1, below_class2 = get_grades(below_avg)									# get class1 grades of students who did below avg
+	below_coeff, below_p_value = get_pearson_coefficient(below_class1, below_class2)	# get the pearson correlation coefficient and p-value from students who did below avg
 
-	create_table("0401", "CS", "0445", "CS")
-	java_grades_list, data_grades_list = update_table_below_avg(half_std_below)
-	pearson_below_grades = pearson_coefficient(java_grades_list, data_grades_list)
+	#getting results for all grades
+	all_coeff, all_p_value = get_pearson_coefficient(all_class1_grades, all_class2_grades)	# get the pearson correlation coefficient and p-value from all student grades 
 
-	print(pearson_below_grades)
-	print(pearson_all)
+	# getting resulst for above average grades
+	above_avg = get_above_avg_grades(students_list, half_std_above)
+	above_class1, above_class2 = get_grades(above_avg)
+	above_coeff, above_p_value = get_pearson_coefficient(above_class1, above_class2)
+
+	print("############################## HYPOTHESIS 1 RESULTS ##############################\n")
+	print_results("below average", len(below_class1), below_coeff, below_p_value)
+	print_results("all", len(all_class1_grades), all_coeff, all_p_value)
+	print_results("above average", len(above_class1), above_coeff, above_p_value) 
 
 if __name__ == '__main__':
 	main()

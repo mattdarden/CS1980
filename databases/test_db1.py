@@ -3,7 +3,7 @@ import csv
 import re
 
 # create a local database using sqlite3
-con = lite.connect('capstone.sqlite')
+con = lite.connect('databases/unittest1.sqlite')
 
 with con:
 	cur = con.cursor()
@@ -53,39 +53,31 @@ with con:
 	* Academics: anonymized_data/csv/PELL, GPA, Acad Standing, Degree (1.m,2.e,2.k,4.a).csv
 	"""
 	classestaken = []
-	with open('anonymized_data/csv/Classes Taken1.csv', mode = 'r', encoding='utf-8-sig') as classes1csv:
+	with open('testdata/h1/Classes Taken.csv', mode = 'r', encoding='utf-8-sig') as classes1csv:
 		reader = csv.reader(classes1csv)
-		for row in reader:
-			classestaken.append(row)
-	with open('anonymized_data/csv/Classes Taken2.csv', mode = 'r', encoding='utf-8-sig') as classes2csv:
-		reader = csv.reader(classes2csv)
-		for row in reader:
-			classestaken.append(row)
-	with open('anonymized_data/csv/Classes Taken3.csv', mode = 'r', encoding='utf-8-sig') as classes3csv:
-		reader = csv.reader(classes3csv)
 		for row in reader:
 			classestaken.append(row)
 
 	demographics = []
-	with open('anonymized_data/csv/Demographics 1i.csv', mode = 'r', encoding='utf-8-sig') as demographicscsv:
+	with open('testdata/h1/Demographics 1i.csv', mode = 'r', encoding='utf-8-sig') as demographicscsv:
 		reader = csv.reader(demographicscsv)
 		for row in reader:
 			demographics.append(row)
 
 	finance = []
-	with open('anonymized_data/csv/FAFSA, income, housing (1.e,1.l, 2.n).csv', mode = 'r', encoding='utf-8-sig') as financecsv:
+	with open('testdata/h1/FAFSA, income, housing (1.e, 1.l, 2.n).csv', mode = 'r', encoding='utf-8-sig') as financecsv:
 		reader = csv.reader(financecsv)
 		for row in reader:
 			finance.append(row)
 
 	major = []
-	with open('anonymized_data/csv/Major, school acceptances 1j, 1k .csv', mode = 'r', encoding='utf-8-sig') as majorcsv:
+	with open('testdata/h1/Major, school acceptances 1j, 1k .csv', mode = 'r', encoding='utf-8-sig') as majorcsv:
 		reader = csv.reader(majorcsv)
 		for row in reader:
 			major.append(row)
 
 	academics = []
-	with open('anonymized_data/csv/PELL, GPA, Acad Standing, Degree (1.m,2.e,2.k,4.a).csv', mode = 'r', encoding='utf-8-sig') as academicscsv:
+	with open('testdata/h1/PELL, GPA, Acad Standing, Degree (1.m,2.e,2.k,4.a).csv', mode = 'r', encoding='utf-8-sig') as academicscsv:
 		reader = csv.reader(academicscsv)
 		for row in reader:
 			academics.append(row)
