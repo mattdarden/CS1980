@@ -144,7 +144,7 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     ABmean = mean(AB)
     same_mean = mean(same)
 
-    #we do a 2-way t test on each different path pair
+    #we do a 2-way t test on each different path pair to look for the pair that is statistically significant
     r, p = stats.ttest_ind(AB, BA)
     if p < correction:
         ABtoBA = True
@@ -158,6 +158,8 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     print('The average grade for students who took CS ' + class_B_cat_num + ' after CS ' + class_A_cat_num + ' is ' + str(ABmean))
     print('The average grade for students who took CS ' + class_B_cat_num + ' and CS ' + class_A_cat_num + ' at the same time is ' + str(same_mean))
     print("")
+
+    #if a path does contain a statistically significant difference we look at the means of the group. The group with the higher means is the path the student should take
     print('By anazlying the data with an ANOVA test and a Post-hoc test that used Bonferroni correction the data shows that the best paths to take CS ' + class_B_cat_num + ' are:')
     if ABtoBA:
         if ABmean > BAmean:
@@ -167,6 +169,7 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
             great = 'before'
             small = 'after'
         print('It is better to take CS ' + class_B_cat_num + ' ' + great + ' CS ' + class_A_cat_num + ' instead of taking CS ' + class_B_cat_num + ' ' + small + ' CS ' + class_A_cat_num + '.')
+
     if BAtosame:
         if BAmean > same_mean:
             print('It is better to take CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + ' instead of taking the two classes in the same semester.')
@@ -179,30 +182,43 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
         else:
             print('It is better to take the classes in the same semester instead of taking CS ' + class_B_cat_num + ' after CS ' + class_A_cat_num + '.')
 
+    if not ABtosame and not BAtosame and not ABtoBA:
+        print("Check the math something went wrong")
+
 
 def close_table():
     con.close()
 
+#if A and B are the same return 0
 def compare_term_code(A,B):
     if A == B:
         return 0
+
+    #the first 3 digits of the code give us the year the course was taken
     a = A/10
     b = B/10
     if a < b:
         return -1
     if a > b:
         return 1
+
+    #if the year was the same check the season
+    #if a is greater than b a was taken in a season before b
+    #4 = spring
+    #7 = summer
+    #1 = fall
     if a == b:
         a = A%10
         b = B%10
-        if a == 7:
+        if a == 4:
             return -1
-        if a == 4 and b == 1:
+        if a == 7 and b == 1:
             return -1
         else:
             return 1
     return -9
 
+#enter a letter grade and get a floating point number grade
 def grade_points(letter):
     if letter == 'A+' or letter == 'A':
         return 4.0
