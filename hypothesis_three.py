@@ -93,20 +93,20 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
                 class_A_times[key] = time
         else:
             class_A_times[key] = time
+
     #AB are students who took class B after class A
     #BA are students who took class B before A or have not taken A yet
     #same are for students who took the 2 classes in the same semester
     AB = []
     BA = []
     same = []
+
     #We loop through the class_B list and add the grade to either AB, BA, or same
     #since the grades are letter grade we class the function grade_points to convert the letter to a floating point grade
+    #we also need the student term code and student id
     for i in range(len(class_B_info)):
-        #get the number grade from the student's letter grade
         grade = grade_points(class_B_info[i][9])
-        #gets the academic_term_code of when the student took the class
         time = class_B_info[i][1]
-        #gets student id
         id = class_B_info[i][0]
 
         #if the grade is a -1 then the student did not receieve a A+ to F grade and may have received a S, W, or I
@@ -125,6 +125,7 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
                 AB.append(grade)
             else:
                 BA.append(grade)
+
     #f_oneway preforms an one-way ANOVA tests on the three lists
     results, pvalue = stats.f_oneway(AB, BA, same)
 
@@ -143,6 +144,7 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     ABmean = mean(AB)
     same_mean = mean(same)
 
+    #we do a 2-way t test on each different path pair
     r, p = stats.ttest_ind(AB, BA)
     if p < correction:
         ABtoBA = True
@@ -152,6 +154,10 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
     r, p = stats.ttest_ind(BA, same)
     if p < correction:
         BAtosame = True
+    print('The average grade for students who took CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + ' is ' + str(BAmean))
+    print('The average grade for students who took CS ' + class_B_cat_num + ' after CS ' + class_A_cat_num + ' is ' + str(ABmean))
+    print('The average grade for students who took CS ' + class_B_cat_num + ' and CS ' + class_A_cat_num + ' at the same time is ' + str(same_mean))
+    print("")
     print('By anazlying the data with an ANOVA test and a Post-hoc test that used Bonferroni correction the data shows that the best paths to take CS ' + class_B_cat_num + ' are:')
     if ABtoBA:
         if ABmean > BAmean:
@@ -165,7 +171,7 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
         if BAmean > same_mean:
             print('It is better to take CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + ' instead of taking the two classes in the same semester.')
         else:
-            print('It is better to take the classes in the same semester instead of taking CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + '.')
+            print('It is better to take the two classes in the same semester instead of taking CS ' + class_B_cat_num + ' before CS ' + class_A_cat_num + '.')
 
     if ABtosame:
         if ABmean > same_mean:
