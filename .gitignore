@@ -3,3 +3,10 @@
 ~$High School GPA, SAT, ACT, AP.xlsx
 learning.db
 capstone.sqlite
+anonymized_data/.DS_Store
+anonymized_data/Classes Taken.xlsx
+*.xlsx
+*.csv
+anonymized_data/csv/.DS_Store
+*.xls
+*.pdf
