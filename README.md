@@ -56,4 +56,6 @@
 * **test_hypothesis_one.py** - unit tests for hypothesis_one implementation
 * **test_hypothesis_two.py** - unit tests for hypothesis_two implementation
 * **run_all.sh** - shell script that creates the database and runs all the hypotheses
-* **run_tests.sh** - shell script that creates the test databases and runs all the unit tests for hypothesis 1 and 2
+* **run_tests.sh** - shell script that creates the test databases and runs all the unit tests for hypothesis 1 and 
+* **corrstats.py** - Functions for calculating the statistical significant differences between two dependent or independent correlation
+coefficients. Author: Philipp Singer (www.philippsinger.info)
