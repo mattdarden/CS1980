@@ -57,8 +57,6 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
         #else if the id for students in class B aren't in class_A_times key then the student never took class A and goes in the BA list
         #else we compare the earliest time they took class A to determine which list the grade should go AB, BA, or same
         if grade == -1:
-
-            amount = amount + 1
             continue
         elif key not in class_A_times.keys():
             BA.append(grade)
@@ -97,15 +95,15 @@ def comparePaths(class_A_cat_num, class_B_cat_num):
 
     #we do a 2-way t test on each different path pair to look for the pair that is statistically significant
     r, p = stats.ttest_ind(AB, BA)
-    if p < correction:
+    if p <= correction:
         ABtoBAp = p
         ABtoBA = True
     r, p = stats.ttest_ind(AB, same)
-    if p < correction:
+    if p <= correction:
         ABtosamep = p
         ABtosame = True
     r, p = stats.ttest_ind(BA, same)
-    if p < correction:
+    if p <= correction:
         BAtosamep = p
         BAtosame = True
 
