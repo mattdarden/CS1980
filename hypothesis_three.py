@@ -3,8 +3,8 @@ import xlrd
 from numpy import mean
 import csv
 from scipy import stats
-print("Enter database for hypothesis_three: ")
-database = input()
+
+database = 'databases/capstone.sqlite'
 con = lite.connect(database)
 cur = con.cursor()
 

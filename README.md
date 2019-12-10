@@ -5,11 +5,11 @@
 
 # PROJECT INTRODUCTION
 ###### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; At the University of Pittsburgh, there is a wide variety of options available for undergraduate students to schedule their courses. In the current system, students are often left to select courses through an extensive list of classes with only the knowledge of basic general education requirements and classes required for their major. In order to create their schedule, students must schedule meetings with their school advisor. However, advisors are limited to screenshots of other schedule building software and prior knowledge. The decision process can oftentimes be overwhelming for students to choose from, as well as for advisors trying to find the best options for students. There are many factors such as professors, course difficulty, work load, prerequisites, and others to consider when scheduling for classes that make the process far more difficult than choosing a predetermined or generic suggested path.
-###### 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Our goal is to analyze student data within the computer science major to build a tool that will find correlations pertinent to helping students and advisors predict the best path to academic success. 
+###### 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Our goal is to analyze student data within the computer science major to build a tool that will find correlations pertinent to helping students and advisors predict the best path to academic success.
 
 ##
 ##### HYPOTHESIS 1
-* if students receive a lower than average grade in CS 401 will receive lower than average grades in CS 445. 
+* if students receive a lower than average grade in CS 401 will receive lower than average grades in CS 445.
 
 ##### HYPOTHESIS 2
 * If a student has a semester buffer between a low level course (CS 445) and its corresponding upper level course (CS 1501), then their score will be lower than a student with a similar grade who took the upper level course the semester after the prerequisite.
@@ -25,6 +25,14 @@
 1. create a folder **'anonymized_data'**
 1. within the folder create another folder called **'csv'**
 1. add formatted data to the 'csv' folder
+
+##### ADDING TESTS BETWEEN CLASSES
+1. add file **'classes.txt'**
+	1. add tests in the following format _**class1_department class1_number class2_department class2_number test_type**_
+		* Ex: 'CS 0401 CS 0445 grades'
+		* _**test_type**_ can either be 'grades' or 'time'
+			* 'grades' will show the correlation between the grades of the two classes, if the grade from class1 impacts the grade from class2
+			* 'time' will show if the number of semesters(0-4) between class1 and class2 has an impact on the grade of class2
 
 ##### HOW TO RUN ALL SCRIPTS
 1. in command line
@@ -42,6 +50,12 @@
 1. when prompted for a database for hypothesis_two: type _**databases/unittest2.sqlite**_ and enter
 * output for tests on hypothesis_one and hypothesis_two should appear in the command line
 
+##### HOW TO RUN TESTS FOR OTHER CLASSES
+1. add all tests to the **'classes.txt'** file that you want to run following the above format
+1. in command line
+1. type _**python class_correlations.py**_ and enter
+* output for each test preceded by the line that output those results should appear in the command line
+
 ##### FILE DESCRIPTIONS
 * **databases** Folder - holds all of the sqlite databases and the python scripts to create the databases
    * **db.py** - creates the main capstone.sqlite database that all hypotheses query from
@@ -51,11 +65,12 @@
 * **old** folder - contains old skeleton code that we used before we received the official data
 * **testdata** folder - contains fake data used for unit testing purposes
 * **hypothesis_one.py** - code that implements a solution to our first hypothesis for the project
-* **hypothesis_two.py** - code that implements a solution to our second hypothesis for the project 
+* **hypothesis_two.py** - code that implements a solution to our second hypothesis for the project
 * **hypothesis_three.py** - code that implements a solution to our third hypothesis for the project
 * **test_hypothesis_one.py** - unit tests for hypothesis_one implementation
 * **test_hypothesis_two.py** - unit tests for hypothesis_two implementation
 * **run_all.sh** - shell script that creates the database and runs all the hypotheses
-* **run_tests.sh** - shell script that creates the test databases and runs all the unit tests for hypothesis 1 and 
+* **run_tests.sh** - shell script that creates the test databases and runs all the unit tests for hypothesis 1 and
 * **corrstats.py** - Functions for calculating the statistical significant differences between two dependent or independent correlation
 coefficients. Author: Philipp Singer (www.philippsinger.info)
+* **class_correlations.py** - code that will run the properly formatted tests listed in the classes.txt
