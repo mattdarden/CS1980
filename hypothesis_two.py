@@ -8,10 +8,9 @@ get user input for which database to use
 capstone.sqlite = database that contains the official anonymized data
 unittest2.sqlite = database with fake data used for unit testing for hypothesis_two
 """
-database = 'databases/capstone.sqlite'
-#connect to the database
-con = lite.connect(database)
-cur = con.cursor()
+database = ''
+con = ''
+cur = ''
 
 def create_table(class1_number, class1_subject, class2_number, class2_subject):
 	"""
@@ -287,7 +286,13 @@ def print_results(gap_size, sample_size, pearson_coeff, p_value):
 
 ############## MAIN ##############
 def two_main(classonedep, classonenum, classtwodep, classtwonum):
-
+	global database
+	global con
+	global cur
+	database = 'databases/capstone.sqlite'
+	#connect to the database
+	con = lite.connect(database)
+	cur = con.cursor()
 	student_list = create_table(classonenum, classonedep, classtwonum, classtwodep)
 	# student_list = create_table("0445", "CS", "1501", "CS")
 	reference_list = get_semesters_reference_list()
@@ -355,7 +360,6 @@ def two_main(classonedep, classonenum, classtwodep, classtwonum):
 	print()
 
 	#closing the connection to the database so more tests can be run
-	global con
 	con.close()
 
 if __name__ == '__main__':
